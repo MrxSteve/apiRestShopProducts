@@ -43,6 +43,13 @@ public class ProductoServiceImp implements IProductoService{
         ProductoEntity producto = productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto con ID: " + id + " no encontrado"));
 
+        // Si se envia una nueva imagen, eliminar la anterior de S3 y guardar la nueva
+        if (request.getImagen() != null && !request.getImagen().isEmpty() &&
+                !request.getImagen().equals(producto.getImagen())) {
+            s3Service.deleteFile(producto.getImagen());
+            producto.setImagen(request.getImagen());
+        }
+
         // Solo actualizar si los valores no son null o vacíos
         if (request.getNombre() != null && !request.getNombre().isEmpty()) {
             producto.setNombre(request.getNombre());
@@ -59,14 +66,11 @@ public class ProductoServiceImp implements IProductoService{
         if (request.getStock() != null) {
             producto.setStock(request.getStock());
         }
-        if (request.getImagen() != null && !request.getImagen().isEmpty()) {
-            producto.setImagen(request.getImagen());
-        }
 
         // Validar y asignar la categoria si se proporciona
         if (request.getCategoriaId() != null) {
             producto.setCategoria(categoriaRepository.findById(request.getCategoriaId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada")));
+                    .orElseThrow(() -> new ResourceNotFoundException("Categoria no encontrada")));
         }
 
         // Validar y asignar la marca si se proporciona
@@ -97,6 +101,12 @@ public class ProductoServiceImp implements IProductoService{
     public void eliminarProducto(Long id) {
         ProductoEntity producto = productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto con ID: " + id + " no encontrado"));
+
+        // Eliminar imagen de S3 antes de eliminar el producto
+        if (producto.getImagen() != null && !producto.getImagen().isEmpty()) {
+            s3Service.deleteFile(producto.getImagen());
+        }
+
         productoRepository.delete(producto);
     }
 

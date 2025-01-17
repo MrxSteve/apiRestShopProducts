@@ -8,12 +8,14 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
+import java.net.URI;
 import java.time.Duration;
 
 @Service
@@ -73,6 +75,22 @@ public class S3ServiceImp implements IS3Service {
 
             PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
             return presignedRequest.url().toString();
+        }
+    }
+
+    @Override
+    public void deleteFile(String imageUrl) {
+        try {
+            // Extraer el nombre del archivo desde la URL
+            URI uri = new URI(imageUrl);
+            String key = uri.getPath().substring(1); // Quita la primera "/"
+
+            getS3Client().deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build());
+        } catch (Exception e) {
+            throw new RuntimeException("Error al eliminar la imagen de S3: " + e.getMessage());
         }
     }
 }
