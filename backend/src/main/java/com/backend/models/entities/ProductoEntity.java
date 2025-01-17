@@ -29,7 +29,9 @@ public class ProductoEntity {
     @Column(name = "precio_venta")
     private Double precioVenta;
 
+    @Column(length = 512)
     private String imagen;
+
     private Integer stock;
 
     @ManyToOne

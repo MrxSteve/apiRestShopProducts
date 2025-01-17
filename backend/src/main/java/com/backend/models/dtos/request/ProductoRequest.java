@@ -12,8 +12,7 @@ public class ProductoRequest {
     @Size(min = 1, max = 100, message = "El nombre debe tener entre 1 y 100 caracteres")
     private String nombre;
 
-    @NotBlank(message = "La descripción es requerida")
-    @Size(min = 1, max = 255, message = "La descripción debe tener entre 1 y 255 caracteres")
+    @Size(max = 255, message = "La descripcion debe tener maximo 255 caracteres")
     private String descripcion;
 
     @NotNull(message = "El precio de compra es requerido")
@@ -24,7 +23,8 @@ public class ProductoRequest {
     @Positive(message = "El precio de venta debe ser mayor a 0")
     private Double precioVenta;
 
-    private String imagen;
+    @Size(max = 512, message = "La imagen debe tener como maximo 512 caracteres")
+    private String imagen; // Aca no mandamos nada, se asignara la url de aws en el controlador
 
     @NotNull(message = "El stock es requerido")
     @Min(value = 0, message = "El stock debe ser mayor o igual a 0")
@@ -36,6 +36,6 @@ public class ProductoRequest {
     @NotNull(message = "La marca es requerida")
     private Long marcaId;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private LocalDate fechaEntrada;
+//    @DateTimeFormat(pattern = "yyyy-MM-dd")
+//    private LocalDate fechaEntrada;
 }
