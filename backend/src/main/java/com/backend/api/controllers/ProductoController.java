@@ -2,34 +2,72 @@ package com.backend.api.controllers;
 
 import com.backend.models.dtos.request.ProductoRequest;
 import com.backend.models.dtos.response.ProductoResponse;
+import com.backend.services.aws.IS3Service;
 import com.backend.services.productos.IProductoService;
-import jakarta.validation.Valid;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/admin/productos")
 @RequiredArgsConstructor
 public class ProductoController {
     private final IProductoService productoService;
+    private final IS3Service s3Service;
 
     @PostMapping("/crear")
-    public ResponseEntity<ProductoResponse> crearProducto(@Valid @RequestBody ProductoRequest request) {
-        ProductoResponse producto = productoService.crearProducto(request);
+    public ResponseEntity<ProductoResponse> crearProducto(
+            @RequestParam("datos") String datosJson,
+            @RequestPart("imagen") MultipartFile imagen) {
+        try {
+            // Convertir JSON a objeto ProductoRequest
+            ObjectMapper objectMapper = new ObjectMapper();
+            ProductoRequest request = objectMapper.readValue(datosJson, ProductoRequest.class);
 
-        return  ResponseEntity.status(201).body(producto);
+            // Subir imagen a S3 y asignar URL
+            String imageUrl = s3Service.uploadFile(imagen);
+            request.setImagen(imageUrl);
+
+            // Crear producto
+            ProductoResponse producto = productoService.crearProducto(request);
+            return ResponseEntity.status(201).body(producto);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
     }
 
     @PutMapping("/actualizar/{id}")
     public ResponseEntity<ProductoResponse> actualizarProducto(
             @PathVariable Long id,
-            @Valid @RequestBody ProductoRequest request) {
-        ProductoResponse producto = productoService.actualizarProducto(id, request);
+            @RequestParam("datos") String datosJson,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
+        try {
+            // Convertir JSON a objeto ProductoRequest
+            ObjectMapper objectMapper = new ObjectMapper();
+            ProductoRequest request = objectMapper.readValue(datosJson, ProductoRequest.class);
 
-        return ResponseEntity.ok(producto);
+            // Si el usuario subio una nueva imagen, la subimos a S3
+            if (imagen != null && !imagen.isEmpty()) {
+                String imageUrl = s3Service.uploadFile(imagen);
+                request.setImagen(imageUrl);
+            }
+
+            // Actualizar producto
+            ProductoResponse productoActualizado = productoService.actualizarProducto(id, request);
+            return ResponseEntity.ok(productoActualizado);
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
     }
 
     @GetMapping("/obtener-todos")
