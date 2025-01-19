@@ -8,10 +8,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/categorias")
+@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class CategoriaController {
     private final ICategoriaService categoriaService;
